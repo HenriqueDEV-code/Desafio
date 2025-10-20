@@ -13,8 +13,7 @@ A aplicação converte automaticamente esses documentos PDF em planilhas Excel (
 
 ### 🎯 Processamento Inteligente
 - **Detecção Automática**: Identifica automaticamente o tipo de documento (holerite ou cartão de ponto)
-- **OCR Avançado**: Suporte para PDFs escaneados e documentos em imagem usando Tesseract OCR
-- **Fallback Inteligente**: Se a detecção automática falhar, tenta processar com OCR
+
 
 ### 📊 Tipos de Documentos Suportados
 
@@ -223,6 +222,30 @@ A pasta `Exemplos/` contém documentos de teste:
 - Horários de entrada e saída por dia
 - Cálculo automático de horas trabalhadas
 - Identificação de horas extras
+
+## ⚠️ Limitações e status da extração por imagem (OCR)
+
+Atualmente, a extração baseada em imagem para processar PDFs escaneados e gerar informações estruturadas no Excel **não funcionou de forma confiável** neste projeto, mesmo utilizando as bibliotecas previstas. Abaixo estão os motivos principais:
+
+- Problema de dados de idioma (tessdata): o Tesseract necessita dos arquivos de idioma (por exemplo, `por.traineddata` para português e `osd.traineddata` para detecção de orientação). Esses arquivos não estão incluídos por padrão com os .dlls e, se ausentes ou incorretos, o OCR retorna texto vazio ou com baixa acurácia.
+- Qualidade do PDF escaneado: imagens com baixa resolução, compressão alta, desalinhamento (skew), ruído e sombras reduzem drasticamente a qualidade do OCR; sem um pré-processamento robusto (binarização, deskew, de-noise, contraste), o reconhecimento falha.
+- Layouts complexos de holerites/cartões: holerites e cartões de ponto possuem tabelas e colunas; o OCR entrega texto sem estrutura. Sem uma camada de reconstrução de tabelas (detecção de linhas/células) e regras específicas por layout, não é possível mapear com confiabilidade os valores para o Excel.
+- Limitações das bibliotecas no contexto atual: a combinação atual (PdfPig para extração/varredura de páginas, ImageSharp para pré-processamento simples e Tesseract para OCR) não inclui um pipeline completo de detecção de tabelas e pós-processamento semântico, o que é necessário para transformar texto OCR em dados estruturados.
+- PDFs híbridos ou protegidos: alguns PDFs misturam texto e imagem ou possuem proteções/formatações internas que dificultam a extração de imagens em qualidade adequada para OCR.
+
+Em resumo: o OCR foi mantido como funcionalidade experimental e pode não extrair informações suficientes para preencher corretamente o Excel, especialmente em documentos escaneados com qualidade mediana/baixa ou com layouts não previstos.
+
+### O que já está implementado
+- Detecção de tipo de documento por texto (quando o PDF contém texto selecionável).
+- Pipeline de OCR básico para tentar extrair texto de imagens.
+- Geração de planilha Excel a partir de dados quando a extração é bem-sucedida.
+
+### Caminhos recomendados para melhorar a extração por imagem
+- Incluir e distribuir `tessdata` com `por.traineddata` e `osd.traineddata` adequados.
+- Adicionar pré-processamento de imagem mais robusto (deskew, binarização adaptativa, remoção de ruído, aumento de contraste, corte de bordas).
+- Implementar detecção e reconstrução de tabelas (detecção de linhas/células) antes do parsing semântico.
+- Criar parsers específicos por layout (regras/regex por fornecedor/modelo de holerite/cartão).
+- Considerar serviços OCR com melhor acurácia e layout analysis (Azure OCR, Google Cloud Vision, ABBYY) se necessário.
 
 ## 🔧 Desenvolvimento
 
